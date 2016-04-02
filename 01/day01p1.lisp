@@ -2,7 +2,7 @@
 ;;;; Answer is 138.
 
 (defconstant *input-file* "input.txt"
-  "Where we read to directions.")
+  "Where we read the directions.")
 
 (defun main()
   (format t "Santa ends on floor ~A.~%" (count-floors *input-file*)))
