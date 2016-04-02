@@ -1,4 +1,5 @@
 ;;;; Advent of code, day 1 problem 1.
+;;;; Answer is 138.
 
 (defconstant *input-file* "input.txt"
   "Where we read to directions.")
@@ -16,8 +17,7 @@
        with floor = 0
        for brace = (read-char f nil)
        do
-         (case brace
+         (ecase brace
            (#\( (incf floor))
            (#\) (decf floor))
-           ((nil) (return-from count-floors floor))
-           (nil (error "unrecognised input char ~C~%" brace))))))
+           ((nil) (return-from count-floors floor))))))
