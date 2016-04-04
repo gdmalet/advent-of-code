@@ -1,5 +1,5 @@
-;;;; Advent of code, day 3 problem 1.
-;;;; Answer is 2592.
+;;;; Advent of code, day 3 problem 2.
+;;;; Answer is 2360.
 ;;;;
 ;;;; We need to represent "an infinite two-dimensional grid", so while
 ;;;; an NxN array is tempting, in theory we could run out of
@@ -13,7 +13,7 @@
   "Where we read the directions.")
 
 (defun main ()
-  (setf (gethash (cons 0 0) *moves*) 1) ; start point is visited
+  (setf (gethash (cons 0 0) *moves*) 2) ; start point is visited by each
 
   (format t "~A houses have received at least one present.~%"
           (hash-table-count (make-moves *input-file*))))
@@ -25,17 +25,19 @@
          :if-does-not-exist :error)
 
     (loop
-       with x = 0
-       with y = 0
+       with locations = (list '(0 . 0) '(0 . 0)) ; Santa & the robot's location
+       for index = 0 then (- 1 index)  ; alternate index between 0 & 1
        for move = (read-char f nil)
        do
          (ecase move
-           (#\< (decf x))
-           (#\> (incf x))
-           (#\^ (incf y))
-           (#\v (decf y))
+           (#\< (decf (car (nth index locations))))
+           (#\> (incf (car (nth index locations))))
+           (#\^ (incf (cdr (nth index locations))))
+           (#\v (decf (cdr (nth index locations))))
            ((nil) (return-from make-moves *moves*)))
 
          ;; Increment the number of times we've visited this location.
          ;; If this is the first visit, default gethash to returning 0.
-         (incf (gethash (cons x y) *moves* 0)))))
+         (incf (gethash (cons (car (nth index locations))
+                              (cdr (nth index locations)))
+                        *moves* 0)))))
