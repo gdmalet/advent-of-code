@@ -1,1 +1,14 @@
 See http://adventofcode.com/
+
+All code was tested and run on:
+
+  i i i i i i i       ooooo    o        ooooooo   ooooo   ooooo
+  I I I I I I I      8     8   8           8     8     o  8    8
+  I  \ `+' /  I      8         8           8     8        8    8
+   \  `-+-'  /       8         8           8      ooooo   8oooo
+    `-__|__-'        8         8           8           8  8
+        |            8     o   8           8     o     8  8
+  ------+------       ooooo    8oooooo  ooo8ooo   ooooo   8
+
+Welcome to GNU CLISP 2.49 (2010-07-07) <http://clisp.cons.org/>
+
