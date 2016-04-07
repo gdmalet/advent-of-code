@@ -1,5 +1,6 @@
-;;;; Advent of code, day 7 problem 1.
-;;;; Answer is 46065.
+;;;; Advent of code, day 7 problem 1 and 2.
+;;;; Answer for problem 1 is 46065.
+;;;; Answer for problem 2 is 14134.
 
 ;;;; Rather than trying to sort the input into optimum order, or
 ;;;; building a tree of dependencies, instead just brute force through
@@ -7,6 +8,8 @@
 ;;;; stablilizes -- which in this case it does after something like 33
 ;;;; iterations.
 
+;; For problem 2, use the input file input2.txt, which makes the
+;; necessary change to force 'b to the output of 'a from problem 1.
 (defconstant *input-file* "input.txt"
   "Where we read the strings.")
 
