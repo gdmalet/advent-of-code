@@ -19,18 +19,19 @@
     (loop
        for line = (read-line f nil)
        while line
-       sum                      ; the 2 below is the enclosing quotes.
+       sum
          (- (length line)
-            (length (format-string line)) -2)
+            (length (format-string line)))
        into diff
        finally
          (return diff))))
 
 (defun format-string (line)
   "Return the properly escaped input string."
-  ;; Step through the existing string, and build up a new one to return."
+  ;; Step through the existing string, and build up a new one to return.
+  ;; Strip beginning and ending quotes by ignoring those character positions.
   (loop
-     for i from 0 to (1- (length line))
+     for i from 1 to (- (length line) 2)
      collect
        (case (char line i)
          (#\\                           ; it's a backslash
