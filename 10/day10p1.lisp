@@ -1,5 +1,6 @@
 ;;;; Advent of code, day 10 problem 1.
-;;;; Answer is 360154.
+;;;; Answer for problem 1 (40 iterations) is 360154.
+;;;; Answer for problem 2 (50 iterations) is 5103798.
 
 (defconstant *puzzle-input* "1113122113"
   "Puzzle input from the problem statement.")
