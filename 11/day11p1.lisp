@@ -1,7 +1,8 @@
 ;;;; Advent of code, day 11 problem 1.
 ;;;; Answer for problem 1 is "hxbxxyzz".
+;;;; Answer for problem 2 is "hxcaabcc".
 
-(defconstant *puzzle-input* "hxbxwxba"
+(defconstant *puzzle-input* "hxbxxyzz" ;;"hxbxwxba"
   "Puzzle input from the problem statement.")
 
 (defconstant *forbidden-letters* '(#\i #\o #\l))
