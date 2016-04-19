@@ -43,9 +43,9 @@
 (defun start-at (destinations route distance depth)
 
   (when (= depth 0)                  ; bottomed out
-    (format t "route: ~D: ~A~%" distance (nreverse route))
+    ;;(format t "route: ~D: ~A~%" distance (reverse route))
     (when (> distance (car *longest-distance*))
-      (format t "best: ~D: ~A~%"  distance (nreverse route))
+      (format t "best: ~D: ~A~%"  distance (reverse route))
       (setf *longest-distance* (cons distance (nreverse route))))
     (return-from start-at))
 
