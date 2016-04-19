@@ -1,5 +1,6 @@
 ;;;; Advent of code, day 13 problem 1.
-;;;; Answer is 618.
+;;;; Answer for problem 1 is 618.
+;;;; Answer for problem 2 is 601.
 
 ;;;; This is an adaptation of problem 9 (the Travelling Salesman), but
 ;;;; with possibly different distances between pairs of towns,
@@ -16,7 +17,8 @@
 ;;;; possible route in a recursive call, and check the distance when
 ;;;; we bottom out.
 
-(defconstant *input-file* "input.txt"
+;; Problem 1 uses input.txt, problem 2 input-p2.txt.
+(defconstant *input-file* "input-p2.txt" ;"input.txt"
   "Where we read the strings.")
 
 (defparameter *input* (make-hash-table :test 'EQUAL)
