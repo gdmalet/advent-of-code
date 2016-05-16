@@ -1,0 +1,43 @@
+With much help from
+ https://www.reddit.com/r/adventofcode/comments/3xflz8/day_19_solutions/cy4etju
+
+For Problem 2:
+
+Unique atoms on LHS & RHS:
+
+Al  Al
+    Ar
+B   B
+    C
+Ca  Ca
+e
+F   F
+H   H
+Mg  Mg
+N   N
+O   O
+P   P
+    Rn
+Si  Si
+Th  Th
+Ti  Ti
+    Y
+
+e             is unique on the left
+Ar, C, Rn, Y are unique on the right.
+
+If Ar or Rn appears on the right, the pattern is always ^.Rn.+Ar$, where
+^ is beginning of string, . is one symbol, .+ is one or more symbols,
+$ is end of string.
+
+A Y on the right is always between Rn and Ar, of the form Rn.Y.Ar or
+Rn.Y.Y.Ar.
+
+If a C appears on the right, it is always the first atom, and is always
+followed by Rn.
+
+Ignoring the last two, rules are:
+
+atom => atom Rn mid Ar | atom [ atom ]
+mid  => atom | atom Y atom | atom Y atom Y atom
+e    => atom atom

@@ -1,61 +1,102 @@
 ;;;; Advent of code, day 19 problem 2.
 ;;;; Answer is ?
 
-(defconstant *input-file* "input42.txt"
+(defconstant *input-file* "input.txt"
   "Where we read the strings.")
 
-(defparameter *replacements* '())
+(defparameter *atom-replacements* '())
+(defparameter *RnAr-replacements* '())
 (defparameter *count* 0)
-(defparameter *memo* (make-hash-table :test 'equal))
 
 (defun main ()
   (multiple-value-bind (medicine replacements)
       (fetch-input *input-file*)
     (format t "med: ~A~%repl: ~A~%~%" medicine replacements)
 
-    (setf *replacements* (reverse-replacements replacements))
+    (setf *atom-replacements* nil *RnAr-replacements* nil)
+    (separate-replacements (reverse-replacements replacements))
+    (setf *count* 0)
 
     (generate medicine '())))
 
 (defun generate (medicine changes)
   (incf *count*)
+  ;;(when (> *count* 100000)
+  ;;  (return-from generate))
 
-  (when (equal medicine "e")
-    (format t "Done, ~D steps: ~A~%" (length changes) changes)
-    (return-from generate))
+  (setf medicine (do-simple-replacements medicine changes))
+  ;;(format t " ---- Simple atoms done: ~A~%" medicine)
 
   (loop
-     for (rhs lhs) in *replacements*      ; items are reversed
-     for i from 1
+     with changed = t
+     while changed
      do
-       ;; Try some memoisation.
-       ;; (let ((key (list (cons lhs rhs) medicine)))
-       ;;   (when (gethash key *memo*)
-       ;;     ;;(format t "Short circuiting ~A => ~A in ~A~%" lhs rhs medicine)
-       ;;     (return-from generate))
-       ;;   (setf (gethash key *memo*) t))
-
-       ;;(format t " grok ~A => ~A med ~A~%" lhs rhs medicine)
+       (setf changed nil)
        (loop
-          for start = (search rhs medicine)
-              then (search rhs medicine :start2 (1+ start))
-          while start
+          with next-start = 0
+          for start = (search "Rn" medicine :start2 next-start)
+          while (and start
+                     (< start (length medicine)))
           do
-            ;;(when (= (mod *count* 10000) 0)
-              ;;(when (= (length changes) 188)
-                (format t "~7d (~3D,~3D): ~2A => ~10A at ~3D, med (~3D) ~A~%"
-                        *count* (length changes) i lhs rhs start (length changes) medicine);))
-            (push (list lhs rhs medicine start) changes)
-            (unless (and (equal lhs "e") ; replace with e should be only the
-                         (not (equal rhs medicine))) ; last step
-              (generate (replace-substring lhs medicine start (length rhs))
-                        changes))
-            (pop changes))
+            (let* ((left-offset (if (lower-case-p (char medicine (1- start)))
+                                    2
+                                    1))
+                   (end (search "Ar" medicine :start2 (+ start 2)))
+                   (start (- start left-offset))
+                   (len (+ (- end start) 2))
+                   (rhs (subseq medicine start (+ start len)))
+                   (lhs (cadr (find rhs *replacements* :key #'car :test #'equal))))
+              (when lhs
+                (format t " ~3D:~D ~A => ~A  ~A~%" start len lhs rhs medicine)
+                (setf changed t)
+                (setf medicine (replace-substring
+                                lhs
+                                medicine
+                                start
+                                len))
+                (setf next-start 0))
+              (unless lhs
+                (setf next-start (+ start left-offset 1)))))
+       (unless changed
+         (multiple-value-bind (med chg)
+             (do-simple-replacements medicine changes)
+           (setf medicine med changed chg)))))
 
-       finally
-       (format t "bottom ~7d: med (~3D) ~A~%"
-               *count* (length changes) medicine)))
 
+(defun do-simple-replacements (medicine changes)
+  (let ((global-change nil))
+    (loop
+       with changed = t
+       while changed
+       do
+         (setf changed nil)
+         (loop
+            for (rhs lhs) in *atom-replacements*
+          do
+              (loop
+                 for start = (search rhs medicine)
+                 while start
+                 do
+                   (setf changed t global-change t)
+                   (format t "@~3D   ~A => ~A  ~A~%" start lhs rhs medicine)
+                   (setf medicine (replace-substring
+                                   lhs
+                                   medicine
+                                   start
+                                   (length rhs))))))
+    (values medicine global-change)))
+
+(defun separate-replacements (replacements)
+  (loop
+     for (rhs lhs) in replacements      ; reversed
+     do
+       (if (and (> (length rhs) 4)
+                (or
+                 (and (lower-case-p (char rhs 1))
+                      (equal (subseq rhs 2 4) "Rn"))
+                 (equal (subseq rhs 1 3) "Rn")))
+           (push (list rhs lhs) *RnAr-replacements*)
+           (push (list rhs lhs) *atom-replacements*))))
 
 (defun replace-substring (source target &optional (start 0) (len (length source)))
   "Replace len characters at the start point in the target with the
