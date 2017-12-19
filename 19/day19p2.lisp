@@ -1,69 +1,118 @@
 ;;;; Advent of code, day 19 problem 2.
 ;;;; Answer is ?
 
-(defconstant *input-file* "input.txt"
+(defconstant *input-file* "input4.txt"
   "Where we read the strings.")
 
 (defparameter *atom-replacements* '())
 (defparameter *RnAr-replacements* '())
 (defparameter *count* 0)
+(defparameter *ptr* 0)
 
 (defun main ()
   (multiple-value-bind (medicine replacements)
       (fetch-input *input-file*)
-    (format t "med: ~A~%repl: ~A~%~%" medicine replacements)
+    (format t "med (~D): ~A~%~%repl (~D): ~A~%~%"
+            (length medicine) medicine (length replacements) replacements)
 
     (setf *atom-replacements* nil *RnAr-replacements* nil)
     (separate-replacements (reverse-replacements replacements))
+
+    ;;(setf *atom-replacements* (nreverse *atom-replacements*))
+
+    (format t "atom-repl (~D): ~A~%~%RnAr-repl (~D): ~A~%~%"
+            (length *atom-replacements*) *atom-replacements* 
+            (length *RnAr-replacements*) *RnAr-replacements*)
+
     (setf *count* 0)
+    (setf *ptr* 0)
 
-    (generate medicine '())))
+    (rdp medicine "" '())))
+    ;;(generate medicine '())))
 
-(defun generate (medicine changes)
+(defun rdp (medicine this-molecule changes)
+  "Recursive descent parser"
   (incf *count*)
-  ;;(when (> *count* 100000)
-  ;;  (return-from generate))
-
-  (setf medicine (do-simple-replacements medicine changes))
-  ;;(format t " ---- Simple atoms done: ~A~%" medicine)
-
   (loop
-     with changed = t
-     while changed
+     with molecule = this-molecule and last-atom
+     while *ptr*
      do
-       (setf changed nil)
-       (loop
-          with next-start = 0
-          for start = (search "Rn" medicine :start2 next-start)
-          while (and start
-                     (< start (length medicine)))
-          do
-            (let* ((left-offset (if (lower-case-p (char medicine (1- start)))
-                                    2
-                                    1))
-                   (end (search "Ar" medicine :start2 (+ start 2)))
-                   (start (- start left-offset))
-                   (len (+ (- end start) 2))
-                   (rhs (subseq medicine start (+ start len)))
-                   (lhs (cadr (find rhs *replacements* :key #'car :test #'equal))))
-              (when lhs
-                (format t " ~3D:~D ~A => ~A  ~A~%" start len lhs rhs medicine)
-                (setf changed t)
-                (setf medicine (replace-substring
-                                lhs
-                                medicine
-                                start
-                                len))
-                (setf next-start 0))
-              (unless lhs
-                (setf next-start (+ start left-offset 1)))))
-       (unless changed
-         (multiple-value-bind (med chg)
-             (do-simple-replacements medicine changes)
-           (setf medicine med changed chg)))))
+       (multiple-value-bind (atom next)
+           (get-next-atom medicine *ptr*)
+         (format t "~D: ptr ~D, next ~D, atom ~A, last-atom ~A, mol ~A~%"
+                 *count* *ptr* next atom last-atom molecule)
+
+         (block loop-inner
+           (when (equal atom "Rn")
+             (format t "~D: atom Rn, molecule ~A~%" *count* molecule)
+             (setf *ptr* next)
+             (setf molecule (do-simple-replacements
+                                (concatenate 'string
+                                             molecule
+                                             last-atom)))
+             (format t "~D: Rn2 mol is now ~S~%" *count* molecule)
+             (let ((last-atom-offset
+                    (- (length molecule)
+                        (if (lower-case-p
+                             (char molecule (1- (length molecule))))
+                            2
+                            1))))
+               (setf molecule (concatenate 'string
+                                           (substring molecule 0 last-atom-offset)
+                                           (rdp medicine
+                                                (concatenate 'string (substring molecule last-atom-offset) atom)
+                                                changes))))
+             (format t "~D: Rn3  mol is now ~S~%" *count* molecule)
+             ;;(setf molecule (do-simple-replacements molecule))
+             ;;(format t "~D: Rn2 mol is now ~S~%" *count* molecule)
+             (let ((last-atom-offset
+                    (- (length molecule)
+                       (if (lower-case-p
+                            (char molecule (1- (length molecule))))
+                            2
+                            1))))
+               (setf last-atom (substring molecule last-atom-offset)
+                     molecule (substring molecule 0 last-atom-offset)
+                     next *ptr*))
+             (format t "~D: Rn4 mol is now ~S ~S~%" *count* molecule last-atom)
+             (return-from loop-inner))
+
+             (when (equal atom "Ar")
+             (let ((sub-start
+                    (if (char= (char molecule 1) #\R)
+                        3
+                        4)))
+               (setf molecule
+                     (concatenate 'string molecule last-atom atom))
+               (format t "~D: Ar mol was    ~A ~D~%" *count* molecule *ptr*)
+               (setf molecule
+                     (concatenate 'string
+                                  (substring molecule 0 sub-start)
+                                  (do-simple-replacements (substring molecule sub-start))))
+               (setf *ptr* next)
+               (let ((foo (find molecule *RnAr-replacements* :key #'car :test #'equal)))
+               (format t "~D: Ar mol is now ~A ~S~%" *count* molecule foo)
+                 (unless foo
+                   (format t "----- no repl for ~A~%" molecule)
+                   (return-from rdp molecule)))
+               (assert (find molecule *RnAr-replacements* :key #'car :test #'equal))
+               (decf *count*)
+               (return-from rdp (cadr (find molecule
+                                            *RnAr-replacements* 
+                                            :key #'car :test #'equal)))))
+
+           ;; Default case
+           (setf molecule (concatenate 'string molecule last-atom)
+                 last-atom atom
+                 *ptr* next)))
+
+     finally
+       (decf *count*)
+       (return-from rdp (do-simple-replacements molecule))))
 
 
-(defun do-simple-replacements (medicine changes)
+
+(defun do-simple-replacements (medicine)
   (let ((global-change nil))
     (loop
        with changed = t
@@ -74,9 +123,10 @@
             for (rhs lhs) in *atom-replacements*
           do
               (loop
-                 for start = (search rhs medicine)
+                 for start = (search rhs medicine) ; :from-end t)
                  while start
                  do
+                   ;;(incf *count*)
                    (setf changed t global-change t)
                    (format t "@~3D   ~A => ~A  ~A~%" start lhs rhs medicine)
                    (setf medicine (replace-substring
@@ -153,3 +203,23 @@ replacements."
          finally
            (push (cons previous items) all-items)
            (return (values from all-items))))))
+
+;; Each atom is either an uppercase letter, or only two letters, the
+;; first uppercase, the second lowercase.
+(defun get-next-atom (string start)
+  "Returns the next atom from the passed in molecule, and the next
+start position."
+  (if (>= start (length string))
+      (return-from get-next-atom nil))
+
+  (let* ((c (schar string start))       ; the character
+        (n (1+ start))                  ; start of the next character
+        (x (if (< n (length string))    ; the next character
+               (schar string n)
+               nil)))
+    (if (and x (lower-case-p x))
+        (values (format nil "~C~C" c x)
+                (+ start 2))
+        (values (format nil "~C" c)
+                (+ start 1)))))
+
