@@ -1,10 +1,10 @@
 The Advent of Code, in Common Lisp.
 
-See http://adventofcode.com/
+See http://adventofcode.com/2015
 
 This is a great learning exercise for the Common Lisp `loop' macro
-(file:///usr/share/doc/hyperspec/Body/m_loop.htm).  Particularly helpful
-was http://www.gigamonkeys.com/book/loop-for-black-belts.html.
+(http://www.lispworks.com/documentation/HyperSpec/Body/m_loop.htm).
+Particularly helpful was http://www.gigamonkeys.com/book/loop-for-black-belts.html.
 
 All code was tested and run on:
 

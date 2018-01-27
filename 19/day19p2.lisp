@@ -1,142 +1,169 @@
 ;;;; Advent of code, day 19 problem 2.
-;;;; Answer is ?
+;;;; Answer is 207
 
-(defconstant *input-file* "input4.txt"
+(defconstant *input-file* "input.txt"
   "Where we read the strings.")
+
+;;; Using the formula from
+;;; https://www.reddit.com/r/adventofcode/comments/3xflz8/day_19_solutions/cy4etju/
+(defun get-count ()
+  (multiple-value-bind (medicine replacements)
+      (fetch-input *input-file*)
+    (loop
+       with Ar-count = 0 and Rn-count = 0 and Y-count = 0 and atom-count = 0
+       for index = 0 then (+ index (length atom))
+       for atom = (get-next-atom medicine index)
+       while atom
+       do
+         (incf atom-count)
+         (cond ((equal atom "Rn") (incf Rn-count))
+               ((equal atom "Ar") (incf Ar-count))
+               ((equal atom "Y")  (incf Y-count)))
+         (format t "atom ~S,~10T Rn ~D, Ar ~D, Y ~D, count ~D, index ~D~%"
+                 atom Rn-count Ar-count Y-count atom-count index)
+       finally (return (- atom-count
+                          1
+                          (+ Ar-count Rn-count)
+                          (* 2 Y-count))))))
+
+;;;; ---- Attempted solution below. It doesn't work :-(
+;;;; This gets stuck with string "TiRnPMgAr", which should ->
+;;;; TiRnFAr -> B...
 
 (defparameter *atom-replacements* '())
 (defparameter *RnAr-replacements* '())
 (defparameter *count* 0)
 (defparameter *ptr* 0)
+(defparameter *medicine* "")
 
 (defun main ()
   (multiple-value-bind (medicine replacements)
       (fetch-input *input-file*)
-    (format t "med (~D): ~A~%~%repl (~D): ~A~%~%"
+    (format t "medicine (~D):~%~A~%~%replacements (~D): ~A~%~%"
             (length medicine) medicine (length replacements) replacements)
 
-    (setf *atom-replacements* nil *RnAr-replacements* nil)
+    (setf *medicine* medicine *atom-replacements* nil *RnAr-replacements* nil)
     (separate-replacements (reverse-replacements replacements))
 
     ;;(setf *atom-replacements* (nreverse *atom-replacements*))
 
-    (format t "atom-repl (~D): ~A~%~%RnAr-repl (~D): ~A~%~%"
+    (format t "atom-replacements (~D): ~A~%~%RnAr-replacements (~D): ~A~%~%"
             (length *atom-replacements*) *atom-replacements* 
             (length *RnAr-replacements*) *RnAr-replacements*)
 
     (setf *count* 0)
     (setf *ptr* 0)
 
-    (rdp medicine "" '())))
-    ;;(generate medicine '())))
+    (do-simple-replacements 0 t)))
 
-(defun rdp (medicine this-molecule changes)
-  "Recursive descent parser"
-  (incf *count*)
+    ;; (let* ((first (get-next-atom *medicine* 0))
+    ;;       (second (get-next-atom *medicine* (+ (length first)))))
+    ;;   (rdp 0 first second))))
+          
+
+(defun rdp2 (offset first second)
+  "Recursive descent parser."
+  (format t "Entering rdp2, offset ~A, ~A ~A~%" offset first second)
   (loop
-     with molecule = this-molecule and last-atom
-     while *ptr*
+     for last = second then next
+     for index = (+ offset (length first) (length second)) then (+ index (length last))
+     for next = (get-next-atom *medicine* index)
+     while next
      do
-       (multiple-value-bind (atom next)
-           (get-next-atom medicine *ptr*)
-         (format t "~D: ptr ~D, next ~D, atom ~A, last-atom ~A, mol ~A~%"
-                 *count* *ptr* next atom last-atom molecule)
+       (format t "index ~D, last ~a, next ~a~%" index last next)
+       (cond
+         ((equal next "Rn")
+          (princ "...recursing ... ")
+          (rdp2 (- index (length last)) last next)
+          ;;;reset index & continue?
+          (setf index (- index (length last))
+                next (get-next-atom *medicine* index))
+          (format t "RESET: index ~D, last ~a, next ~a~%" index last next))
+         ((equal next "Ar")
+          (format t "string is \"~A\"~%" (subseq *medicine* offset (+ index 2)))
+          (loop
+             for (rhs lhs) in *RnAr-replacements*
+             do
+            (format t "checking ~a => ~a~%" lhs rhs)
+            (when (equal rhs (subseq *medicine* offset (+ index 2)))
+              (format t "replacing ~A at ~D with ~A in~%>~A~%" rhs offset lhs *medicine*)
+              (setf *medicine* (replace-substring lhs *medicine* offset (length rhs)))
+              (format t "<~A~%" *medicine*)
+              (format t " 01234567890123456789012345678901234567890123456789~%")
+              (return-from rdp2)))))))
+  
 
-         (block loop-inner
-           (when (equal atom "Rn")
-             (format t "~D: atom Rn, molecule ~A~%" *count* molecule)
-             (setf *ptr* next)
-             (setf molecule (do-simple-replacements
-                                (concatenate 'string
-                                             molecule
-                                             last-atom)))
-             (format t "~D: Rn2 mol is now ~S~%" *count* molecule)
-             (let ((last-atom-offset
-                    (- (length molecule)
-                        (if (lower-case-p
-                             (char molecule (1- (length molecule))))
-                            2
-                            1))))
-               (setf molecule (concatenate 'string
-                                           (substring molecule 0 last-atom-offset)
-                                           (rdp medicine
-                                                (concatenate 'string (substring molecule last-atom-offset) atom)
-                                                changes))))
-             (format t "~D: Rn3  mol is now ~S~%" *count* molecule)
-             ;;(setf molecule (do-simple-replacements molecule))
-             ;;(format t "~D: Rn2 mol is now ~S~%" *count* molecule)
-             (let ((last-atom-offset
-                    (- (length molecule)
-                       (if (lower-case-p
-                            (char molecule (1- (length molecule))))
-                            2
-                            1))))
-               (setf last-atom (substring molecule last-atom-offset)
-                     molecule (substring molecule 0 last-atom-offset)
-                     next *ptr*))
-             (format t "~D: Rn4 mol is now ~S ~S~%" *count* molecule last-atom)
-             (return-from loop-inner))
-
-             (when (equal atom "Ar")
-             (let ((sub-start
-                    (if (char= (char molecule 1) #\R)
-                        3
-                        4)))
-               (setf molecule
-                     (concatenate 'string molecule last-atom atom))
-               (format t "~D: Ar mol was    ~A ~D~%" *count* molecule *ptr*)
-               (setf molecule
-                     (concatenate 'string
-                                  (substring molecule 0 sub-start)
-                                  (do-simple-replacements (substring molecule sub-start))))
-               (setf *ptr* next)
-               (let ((foo (find molecule *RnAr-replacements* :key #'car :test #'equal)))
-               (format t "~D: Ar mol is now ~A ~S~%" *count* molecule foo)
-                 (unless foo
-                   (format t "----- no repl for ~A~%" molecule)
-                   (return-from rdp molecule)))
-               (assert (find molecule *RnAr-replacements* :key #'car :test #'equal))
-               (decf *count*)
-               (return-from rdp (cadr (find molecule
-                                            *RnAr-replacements* 
-                                            :key #'car :test #'equal)))))
-
-           ;; Default case
-           (setf molecule (concatenate 'string molecule last-atom)
-                 last-atom atom
-                 *ptr* next)))
-
-     finally
-       (decf *count*)
-       (return-from rdp (do-simple-replacements molecule))))
+;;; Start of medicine string assumed to be XRn.
+;;; Look for ending Ar, or recurse if we hit another Rn.
+(defun rdp (offset first second)
+  "Recursive descent parser."
+  (format t "Entering rdp, offset ~A, ~A ~A~%" offset first second)
+  (loop
+     for last = second then next
+     for index = (+ offset (length first) (length second)) then (+ index (length last))
+     for next = (get-next-atom *medicine* index)
+     do
+       (format t "last ~a, index ~A, next ~a~%" last index next)
+       (cond
+         ((equal next "Rn")
+          (princ "...recursing ... ")
+          (rdp (- index (length last)) last next)
+          ;;;reset index & continue?
+          (return-from rdp))
+         ((equal next "Ar")
+          (format t "string is \"~A\"~%" (subseq *medicine* offset (+ index 2)))
+          (loop
+             for (rhs lhs) in *RnAr-replacements*
+             do
+            (format t "checking ~a => ~a~%" lhs rhs)
+            (when (equal rhs (subseq *medicine* offset (+ index 2)))
+              (format t "replacing ~A at ~D with ~A in~%>~A~%" rhs offset lhs *medicine*)
+              (setf *medicine* (replace-substring lhs *medicine* offset (length rhs)))
+              (format t "<~A~%" *medicine*)
+              (format t " 01234567890123456789012345678901234567890123456789~%")
+              (return-from rdp))))
+         ((not (equal last "RnXX"))
+          (format t "??1 index ~D, offset ~D, last ~A, next ~A~%"
+                  index offset last next)
+          (do-simple-replacements index)
+          (setf next (get-next-atom *medicine* index)))
+         (t
+          (format t "??2 index ~D, offset ~D, last ~A, next ~A~%"
+                  index offset last next)))))
+  
 
 
+(defun do-simple-replacements (start &optional (recurse nil))
+  "Make replacements in the given medicine until we hit a longer
+molecule, then call the parser to deal with it..."
+  (format t "Entering do-simple-replacements, start at ~D~%" start)
+  (loop
+     for first = (get-next-atom *medicine* start)
+     for second = (get-next-atom *medicine* (+ start (length first)))
+     do
+       (block continue
+         (format t "Got first ~A, second ~A at start ~D~%" first second start)
 
-(defun do-simple-replacements (medicine)
-  (let ((global-change nil))
-    (loop
-       with changed = t
-       while changed
-       do
-         (setf changed nil)
-         (loop
-            for (rhs lhs) in *atom-replacements*
-          do
-              (loop
-                 for start = (search rhs medicine) ; :from-end t)
-                 while start
-                 do
-                   ;;(incf *count*)
-                   (setf changed t global-change t)
-                   (format t "@~3D   ~A => ~A  ~A~%" start lhs rhs medicine)
-                   (setf medicine (replace-substring
-                                   lhs
-                                   medicine
-                                   start
-                                   (length rhs))))))
-    (values medicine global-change)))
+         (cond ((and recurse (equal second "Rn"))
+                (rdp2 start first second)
+                (format t "back from rdp~%")
+                (return-from continue))
+               (t
+                (loop
+                   for (rhs lhs) in *atom-replacements*
+                   do
+                     ;;(format t "checking ~a => ~a~%" lhs rhs)
+                     (when (equal rhs (concatenate 'string first second))
+                       (format t "replacing ~A at ~D with ~A in~%>~A~%" rhs start lhs *medicine*)
+                       (setf *medicine* (replace-substring lhs *medicine* start (length rhs)))
+                       (format t "<~A~%" *medicine*)
+                       (format t " 01234567890123456789012345678901234567890123456789~%")
+                       (return-from continue)))
+                (format t "Exiting do-simple-replacements~%")  ; no replacements
+                (return-from do-simple-replacements))))))
 
 (defun separate-replacements (replacements)
+  "Separate replacements into atoms or RnAr replacements."
   (loop
      for (rhs lhs) in replacements      ; reversed
      do
@@ -151,6 +178,7 @@
 (defun replace-substring (source target &optional (start 0) (len (length source)))
   "Replace len characters at the start point in the target with the
 full source string."
+  (incf *count*)
   (concatenate 'string
                (subseq target 0 start)
                source
