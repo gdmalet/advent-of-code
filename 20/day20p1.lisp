@@ -22,10 +22,14 @@
 ;; further.
 (defun brute-sieve ()
   (loop
-     with sums = (make-array *puzzle-input* ; a guess, for size
+     ;; This limit should be something big. Looking at output.txt, the
+     ;; average ratio of the puzzle input to the winning door number
+     ;; is a bit over 40 -- so be a bit convervative.
+     ;; Note that this value is too small for puzzle inputs under about 1000.
+     with over-limit = (ceiling (/ *puzzle-input* 30))
+     with sums = (make-array over-limit
                              :element-type '(integer 0 4294967295)
                              :initial-element 10)
-     with over-limit = (1- (length sums))   ; an index, something big
      for i from 2
      while (< i over-limit)
      do
@@ -54,7 +58,8 @@
 
 (defparameter *results* nil)
 
-;;; A brute force search like this takes too long. See output.txt.
+;;; A brute force search like this takes too long. See output.txt,
+;;; generated from calling this function.
 (defun main ()
   (loop
      with max = 0 and maxdoor
