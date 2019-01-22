@@ -17,7 +17,7 @@
 (defconstant *puzzle-input* 29000000    ; 29 million
   "Puzzle input from the problem statement.")
 
-;; Simple walk each elf along the street, depositing presents, until
+;; Simply walk each elf along the street, depositing presents, until
 ;; we go over the limit. Make sure all elves go to that point, but no
 ;; further.
 (defun brute-sieve ()
