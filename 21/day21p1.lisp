@@ -23,6 +23,7 @@
 
 (defconstant rings
   '((nothing      0 0 0)
+    (nothing      0 0 0)
     (damage+1    25 1 0)
     (damage+2    50 2 0)
     (damage+3   100 3 0)
@@ -45,12 +46,22 @@
     :initarg :ap
     :initform 0)))
 
+(defmethod print-object ((inst stats) stream)
+  "Print an instance of player stats."
+  (format stream "~6S: hit ~a, damage ~a, armour ~a"
+          (slot-value inst 'id)
+          (slot-value inst 'hit-points)
+          (slot-value inst 'damage-points)
+          (slot-value inst 'armour-points)))
+  
 (defun main ()
   "Start point. Load the input and do a search."
   (play (fetch-input input-file)))
 
 (defun play (hits-damage-armour)
   "Try all the options, and play each game."
+  ;; There will be a small bit of duplicate testing here, but not
+  ;; really enough to matter.
   (let ((least-cost 999999))
     (loop
        for weapon in weapons
@@ -59,10 +70,12 @@
             for armour in armours
             do
               (loop
-                 for ring1 in rings
+                 for i from 0 to (1- (length rings))
+                 for ring1 = (nth i rings)
                  do
                    (loop
-                      for ring2 in rings
+                      for j from (1+ i) to (1- (length rings))
+                      for ring2 = (nth j rings)
                       do
                         (let ((boss (make-instance 'stats
                                                  :id 'boss
@@ -81,18 +94,11 @@
                                   (caddr ring2))
                             (incf (slot-value player 'armour-points)
                                   (cadddr ring2)))
+                          
                           (format t "~%weapon ~a~%armour ~a~%ring1  ~a~%ring2  ~a~%"
                                   weapon armour ring1 ring2)
-                          (format t "~6S: hit ~a, damage ~a, armour ~a~%"
-                                  (slot-value player 'id)
-                                  (slot-value player 'hit-points)
-                                  (slot-value player 'damage-points)
-                                  (slot-value player 'armour-points))
-                          (format t "~6S: hit ~a, damage ~a, armour ~a~%"
-                                  (slot-value boss 'id)
-                                  (slot-value boss 'hit-points)
-                                  (slot-value boss 'damage-points)
-                                  (slot-value boss 'armour-points))
+                          (format t "~A~%" player)
+                          (format t "~A~%" boss)
 
                           (play-game player boss)
                           (when (> (slot-value player 'hit-points)
@@ -104,7 +110,8 @@
                               (format t "Player won with cost ~a.~%" cost)
                               (when (< cost least-cost)
                                 (setf least-cost cost)
-                                (format t " This is a least cost.~%")))))))))))
+                                (format t "* This is a least cost.~%")))))))))
+    (format t "~%Least cost is ~A.~%" least-cost)))
 
 (defun play-game (one other)
   "Alternate turns until one player runs out of hit points."
@@ -114,12 +121,7 @@
      for tmp = p
      while (> (play-turn p o) 0)
      ;;do
-       ;;(format t " p is ~A, o is ~A~%" (slot-value p 'id)(slot-value o 'id))
-       ;;(format t "~6S: hit ~a, damage ~a, armour ~a~%"
-       ;;        (slot-value o 'id)
-       ;;        (slot-value o 'hit-points)
-       ;;        (slot-value o 'damage-points)
-       ;;        (slot-value o 'armour-points))
+       ;;(format t "~a~%" o)
      finally
        (format t "~s is out of hp, ~s has ~a~%"
                (slot-value o 'id)
