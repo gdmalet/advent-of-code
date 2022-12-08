@@ -1,12 +1,12 @@
 ;;;; Advent of code, day 1 problem 1.
 ;;;; Answer is 71506.
 
-(defconstant *input-file* "input.txt"
+(defconstant +input-file+ "input.txt"
   "Where we read the goods.")
 
 (defun main ()
    (with-open-file
-       (f (make-pathname :name *input-file*)
+       (f (make-pathname :name +input-file+)
          :direction :input
          :if-does-not-exist :error)
 
@@ -31,7 +31,7 @@
                 (setf num (1+ num)
                       total 0)))
           
-          ;;; end of file
+          ;; end of file
           (unless cals
             (format t "max is ~A from number ~A~%" max max-num)
             (return-from main (list max max-num))))))
