@@ -1,5 +1,5 @@
-;;;; Advent of code, day 4 problem 1.
-;;;; Answer is 657.
+;;;; Advent of code, day 4 problem 2.
+;;;; Answer is 938.
 
 (defconstant +input-file+ "input.txt"
   "Where we read the goods.")
@@ -20,14 +20,19 @@
 	  (values left (read-from-string range nil nil :start end)))))
 
 (defun process-line (left right)
-  "Returns 1 if one range fully contains the other, else 0."
+  "Returns 1 if there is overlap in ranges, else 0."
   (multiple-value-bind (left-from left-to)
 	  (split-range left)
 	(multiple-value-bind (right-from right-to)
 		(split-range right)
+	  
 	  (if (or (and (>= left-from right-from)
+				   (<= left-from right-to))
+			  (and (>= left-to right-from)
 				   (<= left-to right-to))
 			  (and (>= right-from left-from)
+				   (<= right-from left-to))
+			  (and (>= right-to left-from)
 				   (<= right-to left-to)))
 		  1
 		  0))))
