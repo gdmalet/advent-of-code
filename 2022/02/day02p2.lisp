@@ -1,4 +1,4 @@
-;;;; Advent of code, day 2 problem 1.
+;;;; Advent of code, day 2 problem 2.
 ;;;; Answer is 12535.
 
 (defconstant +input-file+ "input.txt"
