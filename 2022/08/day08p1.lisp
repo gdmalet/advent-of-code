@@ -75,7 +75,7 @@
      for row upfrom 0 to (1- (array-dimension ary 0))
      sum (loop
             for col upfrom 0 to (1- (array-dimension ary 1))
-            sum (aref *visible* row col))))
+            sum (aref ary row col))))
 
 (defun main ()
   (with-open-file
