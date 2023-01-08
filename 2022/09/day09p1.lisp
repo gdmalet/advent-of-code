@@ -68,7 +68,7 @@ when starting at origin. This keeps things away from the edges.")
 
       (loop
          with head = *start-position*
-         with tail = (cons (car *start-position*) (cdr *start-position*)) ; force copy
+         with tail = (copy-list *start-position*) ; force copy
          for direction = (read f nil)
          for count = (read f nil) 
          while direction
